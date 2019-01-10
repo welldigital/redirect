@@ -1,8 +1,11 @@
 package redirect
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // Code used to redirect.
@@ -50,9 +53,24 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		to = h.Default
 	}
+	log(r.URL.Path, to.URL, to.Code)
 	http.Redirect(w, r, to.URL, int(to.Code))
 }
 
 func normalise(path string) string {
 	return strings.ToLower(strings.TrimSuffix(path, "/"))
+}
+
+func log(from, to string, code Code) {
+	b, err := json.Marshal(map[string]interface{}{
+		"time": time.Now().UTC(),
+		"from": from,
+		"to":   to,
+		"code": code,
+	})
+	if err != nil {
+		fmt.Printf("error marshalling JSON: %v\n", err)
+		return
+	}
+	fmt.Println(string(b))
 }
